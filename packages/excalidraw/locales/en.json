@@ -30,7 +30,7 @@
     "strokeStyle_solid": "Solid",
     "strokeStyle_dashed": "Dashed",
     "strokeStyle_dotted": "Dotted",
-    "sloppiness": "Sloppiness",
+    "sloppiness": "Roughness",
     "opacity": "Opacity",
     "textAlign": "Text align",
     "edges": "Edges",
@@ -56,8 +56,8 @@
     "arrowtype_elbowed": "Elbow arrow",
     "fontSize": "Font size",
     "fontFamily": "Font family",
-    "addWatermark": "Add \"Made with Excalidraw\"",
-    "handDrawn": "Hand-drawn",
+    "addWatermark": "Add \"Made with Glyph\"",
+    "handDrawn": "Sketch",
     "normal": "Normal",
     "code": "Code",
     "small": "Small",
@@ -86,15 +86,15 @@
     "layers": "Layers",
     "actions": "Actions",
     "language": "Language",
-    "liveCollaboration": "Live collaboration...",
+    "liveCollaboration": "Sessions...",
     "duplicateSelection": "Duplicate",
     "untitled": "Untitled",
     "name": "Name",
     "yourName": "Your name",
-    "madeWithExcalidraw": "Made with Excalidraw",
+    "madeWithExcalidraw": "Made with Glyph",
     "group": "Group selection",
     "ungroup": "Ungroup selection",
-    "collaborators": "Collaborators",
+    "collaborators": "Participants",
     "toggleGrid": "Toggle grid",
     "addToLibrary": "Add to library",
     "removeFromLibrary": "Remove from library",
@@ -114,14 +114,14 @@
     "flipHorizontal": "Flip horizontal",
     "flipVertical": "Flip vertical",
     "viewMode": "View mode",
-    "share": "Share",
+    "share": "Export",
     "showStroke": "Show stroke color picker",
     "showBackground": "Show background color picker",
     "showFonts": "Show font picker",
     "toggleTheme": "Toggle light/dark theme",
     "theme": "Theme",
     "personalLib": "Personal Library",
-    "excalidrawLib": "Excalidraw Library",
+    "excalidrawLib": "Glyph Library",
     "decreaseFontSize": "Decrease font size",
     "increaseFontSize": "Increase font size",
     "unbindText": "Unbind text",
@@ -163,7 +163,7 @@
     "zoomToFitViewport": "Zoom to fit in viewport",
     "zoomToFitSelection": "Zoom to fit selection",
     "zoomToFit": "Zoom to fit all elements",
-    "installPWA": "Install Excalidraw locally (PWA)",
+    "installPWA": "Install Glyph locally",
     "autoResize": "Enable text auto-resizing",
     "imageCropping": "Image cropping",
     "unCroppedDimension": "Uncropped dimension",
@@ -208,7 +208,7 @@
     "save": "Save to current file",
     "saveAs": "Save as",
     "load": "Open",
-    "getShareableLink": "Get shareable link",
+    "getShareableLink": "Create export link",
     "close": "Close",
     "selectLanguage": "Select language",
     "scrollBackToContent": "Scroll back to content",
@@ -221,7 +221,7 @@
     "undo": "Undo",
     "redo": "Redo",
     "resetLibrary": "Reset library",
-    "createNewRoom": "Create new room",
+    "createNewRoom": "Start session",
     "fullScreen": "Full screen",
     "darkMode": "Dark mode",
     "lightMode": "Light mode",
@@ -312,7 +312,7 @@
     "laser": "Laser pointer",
     "hand": "Hand (panning tool)",
     "extraTools": "More tools",
-    "mermaidToExcalidraw": "Mermaid to Excalidraw",
+    "mermaidToExcalidraw": "Mermaid to Glyph",
     "convertElementType": "Toggle shape type"
   },
   "element": {
@@ -383,14 +383,14 @@
     "or": "Or"
   },
   "roomDialog": {
-    "desc_intro": "Invite people to collaborate on your drawing.",
+    "desc_intro": "Invite others to think together.",
     "desc_privacy": "Don't worry, the session is end-to-end encrypted, and fully private. Not even our server can see what you draw.",
     "button_startSession": "Start session",
     "button_stopSession": "Stop session",
-    "desc_inProgressIntro": "Live-collaboration session is now in progress.",
+    "desc_inProgressIntro": "Session is active.",
     "desc_shareLink": "Share this link with anyone you want to collaborate with:",
     "desc_exitSession": "Stopping the session will disconnect you from the room, but you'll be able to continue working with the scene, locally. Note that this won't affect other people, and they'll still be able to collaborate on their version.",
-    "shareTitle": "Join a live collaboration session on Excalidraw"
+    "shareTitle": "Join a session on Glyph"
   },
   "errorDialog": {
     "title": "Error"
@@ -503,8 +503,8 @@
     }
   },
   "encrypted": {
-    "tooltip": "Your drawings are end-to-end encrypted so Excalidraw's servers will never see them.",
-    "link": "Blog post on end-to-end encryption in Excalidraw"
+    "tooltip": "Your work is end-to-end encrypted and stays private.",
+    "link": "Learn about encryption"
   },
   "stats": {
     "angle": "Angle",
@@ -557,14 +557,14 @@
   },
   "welcomeScreen": {
     "app": {
-      "center_heading": "All your data is saved locally in your browser.",
-      "center_heading_plus": "Did you want to go to the Excalidraw+ instead?",
+      "center_heading": "Your thoughts stay local. Always private.",
+      "center_heading_plus": "Your thoughts stay local. Always private.",
       "menuHint": "Export, preferences, languages, ..."
     },
     "defaults": {
       "menuHint": "Export, preferences, and more...",
-      "center_heading": "Diagrams. Made. Simple.",
-      "toolbarHint": "Pick a tool & Start drawing!",
+      "center_heading": "Think visually. Nothing here is permanent.",
+      "toolbarHint": "Select a tool to begin",
       "helpHint": "Shortcuts & help"
     }
   },
@@ -608,7 +608,7 @@
     }
   },
   "mermaid": {
-    "title": "Mermaid to Excalidraw",
+    "title": "Mermaid to Glyph",
     "button": "Insert",
     "description": "Currently only <flowchartLink>Flowchart</flowchartLink>,<sequenceLink> Sequence, </sequenceLink> and <classLink>Class </classLink>Diagrams are supported. The other types will be rendered as image in Excalidraw.",
     "syntax": "Mermaid Syntax",

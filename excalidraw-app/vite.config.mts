@@ -115,7 +115,7 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       Sitemap({
-        hostname: "https://excalidraw.com",
+        hostname: "https://glyph.app",
         outDir: "build",
         changefreq: "monthly",
         // its static in public folder
@@ -203,10 +203,10 @@ export default defineConfig(({ mode }) => {
           maximumFileSizeToCacheInBytes: 2.3 * 1024 ** 2, // 2.3MB
         },
         manifest: {
-          short_name: "Excalidraw",
-          name: "Excalidraw",
+          short_name: "Glyph",
+          name: "Glyph",
           description:
-            "Excalidraw is a whiteboard tool that lets you easily sketch diagrams that have a hand-drawn feel to them.",
+            "Glyph is a calm, minimal thinking canvas for deep thinking, system design, journaling with diagrams, and idea exploration.",
           icons: [
             {
               src: "android-chrome-192x192.png",
@@ -230,10 +230,10 @@ export default defineConfig(({ mode }) => {
             },
           ],
           start_url: "/",
-          id: "excalidraw",
+          id: "glyph",
           display: "standalone",
           theme_color: "#121212",
-          background_color: "#ffffff",
+          background_color: "#faf9f7",
           file_handlers: [
             {
               action: "/",
