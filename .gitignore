@@ -2,6 +2,8 @@
 .env.development.local
 .env.local
 .env.production.local
+.env.production
+.env
 .env.test.local
 .envrc
 .eslintcache
