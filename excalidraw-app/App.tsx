@@ -22,7 +22,6 @@ import {
   EVENT,
   THEME,
   VERSION_TIMEOUT,
-  debounce,
   getVersion,
   getFrame,
   isTestEnv,
@@ -30,8 +29,12 @@ import {
   resolvablePromise,
   isRunningInIframe,
   isDevEnv,
+  throttleRAF,
+  debounce,
 } from "@excalidraw/common";
+import { nanoid } from "nanoid";
 import polyfill from "@excalidraw/excalidraw/polyfill";
+import { decryptData } from "@excalidraw/excalidraw/data/encryption";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { loadFromBlob } from "@excalidraw/excalidraw/data/blob";
 import { useCallbackRefState } from "@excalidraw/excalidraw/hooks/useCallbackRefState";
@@ -132,6 +135,8 @@ import { ExcalidrawPlusIframeExport } from "./ExcalidrawPlusIframeExport";
 import "./index.scss";
 
 import { AppSidebar } from "./components/AppSidebar";
+import { SidebarLayout } from "./components/SidebarLayout";
+import PasswordGate from "./components/PasswordGate";
 
 import type { CollabAPI } from "./collab/Collab";
 
@@ -346,11 +351,11 @@ const initializeScene = async (opts: {
   } else if (scene) {
     return isExternalScene && jsonBackendMatch
       ? {
-          scene,
-          isExternalScene,
-          id: jsonBackendMatch[1],
-          key: jsonBackendMatch[2],
-        }
+        scene,
+        isExternalScene,
+        id: jsonBackendMatch[1],
+        key: jsonBackendMatch[2],
+      }
       : { scene, isExternalScene: false };
   }
   return { scene: null, isExternalScene: false };
@@ -365,6 +370,8 @@ const ExcalidrawWrapper = () => {
   const [langCode, setLangCode] = useAppLangCode();
 
   const editorInterface = useEditorInterface();
+
+
 
   // initial state
   // ---------------------------------------------------------------------------
@@ -389,6 +396,7 @@ const ExcalidrawWrapper = () => {
 
   const [excalidrawAPI, excalidrawRefCallback] =
     useCallbackRefState<ExcalidrawImperativeAPI>();
+
 
   const [, setShareDialogState] = useAtom(shareDialogStateAtom);
   const [collabAPI] = useAtom(collabAPIAtom);
@@ -684,7 +692,6 @@ const ExcalidrawWrapper = () => {
       });
     }
 
-    // Render the debug scene if the debug canvas is available
     if (debugCanvasRef.current && excalidrawAPI) {
       debugRenderer(
         debugCanvasRef.current,
@@ -693,6 +700,7 @@ const ExcalidrawWrapper = () => {
         window.devicePixelRatio,
       );
     }
+
   };
 
   const [latestShareableLink, setLatestShareableLink] = useState<string | null>(
@@ -756,6 +764,7 @@ const ExcalidrawWrapper = () => {
 
   const localStorageQuotaExceeded = useAtomValue(localStorageQuotaExceededAtom);
 
+
   const onCollabDialogOpen = useCallback(
     () => setShareDialogState({ isOpen: true, type: "collaborationOnly" }),
     [setShareDialogState],
@@ -781,213 +790,222 @@ const ExcalidrawWrapper = () => {
   }
 
   return (
-    <div
-      style={{ height: "100%" }}
-      className={clsx("excalidraw-app", {
-        "is-collaborating": isCollaborating,
-      })}
-    >
-      <Excalidraw
-        excalidrawAPI={excalidrawRefCallback}
-        onChange={onChange}
-        initialData={initialStatePromiseRef.current.promise}
-        isCollaborating={isCollaborating}
-        onPointerUpdate={collabAPI?.onPointerUpdate}
-        UIOptions={{
-          canvasActions: {
-            toggleTheme: true,
-            export: {
-              onExportToBackend,
-            },
-          },
-        }}
-        langCode={langCode}
-        renderCustomStats={renderCustomStats}
-        detectScroll={false}
-        handleKeyboardGlobally={true}
-        autoFocus={true}
-        theme={editorTheme}
-        renderTopRightUI={(isMobile) => {
-          if (isMobile || !collabAPI || isCollabDisabled) {
-            return null;
-          }
-
-          return (
-            <div className="excalidraw-ui-top-right">
-              {collabError.message && <CollabError collabError={collabError} />}
-            </div>
-          );
-        }}
-        onLinkOpen={(element, event) => {
-          if (element.link && isElementLink(element.link)) {
-            event.preventDefault();
-            excalidrawAPI?.scrollToContent(element.link, { animate: true });
-          }
-        }}
+    <PasswordGate>
+      <div
+        style={{ height: "100%", position: "relative" }}
+        className={clsx("excalidraw-app", {
+          "is-collaborating": isCollaborating,
+        })}
       >
-        <AppMainMenu
-          onCollabDialogOpen={onCollabDialogOpen}
-          isCollaborating={isCollaborating}
-          isCollabEnabled={!isCollabDisabled}
-          theme={appTheme}
-          setTheme={(theme) => setAppTheme(theme)}
-          refresh={() => forceRefresh((prev) => !prev)}
-        />
-        <AppWelcomeScreen
-          onCollabDialogOpen={onCollabDialogOpen}
-          isCollabEnabled={!isCollabDisabled}
-        />
-        <OverwriteConfirmDialog>
-          <OverwriteConfirmDialog.Actions.ExportToImage />
-          <OverwriteConfirmDialog.Actions.SaveToDisk />
-        </OverwriteConfirmDialog>
-        <AppFooter onChange={() => excalidrawAPI?.refresh()} />
-        {excalidrawAPI && <AIComponents excalidrawAPI={excalidrawAPI} />}
-
-        <TTDDialogTrigger />
-        {isCollaborating && isOffline && (
-          <div className="alertalert--warning">
-            {t("alerts.collabOfflineWarning")}
-          </div>
-        )}
-        {localStorageQuotaExceeded && (
-          <div className="alert alert--danger">
-            {t("alerts.localStorageQuotaExceeded")}
-          </div>
-        )}
-        {latestShareableLink && (
-          <ShareableLinkDialog
-            link={latestShareableLink}
-            onCloseRequest={() => setLatestShareableLink(null)}
-            setErrorMessage={setErrorMessage}
-          />
-        )}
-        {excalidrawAPI && !isCollabDisabled && (
-          <Collab excalidrawAPI={excalidrawAPI} />
-        )}
-
-        <ShareDialog
-          collabAPI={collabAPI}
-          onExportToBackend={async () => {
-            if (excalidrawAPI) {
-              try {
-                await onExportToBackend(
-                  excalidrawAPI.getSceneElements(),
-                  excalidrawAPI.getAppState(),
-                  excalidrawAPI.getFiles(),
-                );
-              } catch (error: any) {
-                setErrorMessage(error.message);
-              }
-            }
-          }}
-        />
-
-        <AppSidebar />
-
-        {errorMessage && (
-          <ErrorDialog onClose={() => setErrorMessage("")}>
-            {errorMessage}
-          </ErrorDialog>
-        )}
-
-        <CommandPalette
-          customCommandPaletteItems={[
-            {
-              label: t("labels.liveCollaboration"),
-              category: DEFAULT_CATEGORIES.app,
-              keywords: [
-                "team",
-                "multiplayer",
-                "share",
-                "public",
-                "session",
-                "invite",
-              ],
-              icon: usersIcon,
-              perform: () => {
-                setShareDialogState({
-                  isOpen: true,
-                  type: "collaborationOnly",
-                });
+        <SidebarLayout>
+          <Excalidraw
+            excalidrawAPI={excalidrawRefCallback}
+            onChange={onChange}
+            initialData={initialStatePromiseRef.current.promise}
+            isCollaborating={isCollaborating}
+            onPointerUpdate={collabAPI?.onPointerUpdate}
+            UIOptions={{
+              canvasActions: {
+                toggleTheme: true,
+                export: {
+                  onExportToBackend,
+                },
               },
-            },
-            {
-              label: t("roomDialog.button_stopSession"),
-              category: DEFAULT_CATEGORIES.app,
-              predicate: () => !!collabAPI?.isCollaborating(),
-              keywords: [
-                "stop",
-                "session",
-                "end",
-                "leave",
-                "close",
-                "exit",
-                "collaboration",
-              ],
-              perform: () => {
-                if (collabAPI) {
-                  collabAPI.stopCollaboration();
-                  if (!collabAPI.isCollaborating()) {
-                    setShareDialogState({ isOpen: false });
+            }}
+            langCode={langCode}
+            renderCustomStats={renderCustomStats}
+            detectScroll={false}
+            handleKeyboardGlobally={true}
+            autoFocus={true}
+            theme={editorTheme}
+            renderTopRightUI={(isMobile) => {
+              if (isMobile || !collabAPI || isCollabDisabled) {
+                return null;
+              }
+
+              return (
+                <div className="excalidraw-ui-top-right">
+                  {collabError.message && <CollabError collabError={collabError} />}
+                </div>
+              );
+            }}
+            onLinkOpen={(element, event) => {
+              if (element.link && isElementLink(element.link)) {
+                event.preventDefault();
+                excalidrawAPI?.scrollToContent(element.link, { animate: true });
+              }
+            }}
+          >
+            <AppMainMenu
+              onCollabDialogOpen={onCollabDialogOpen}
+              isCollaborating={isCollaborating}
+              isCollabEnabled={!isCollabDisabled}
+              theme={appTheme}
+              setTheme={(theme) => setAppTheme(theme)}
+              refresh={() => forceRefresh((prev) => !prev)}
+            />
+            <AppWelcomeScreen
+              onCollabDialogOpen={onCollabDialogOpen}
+              isCollabEnabled={!isCollabDisabled}
+            />
+            <OverwriteConfirmDialog>
+              <OverwriteConfirmDialog.Actions.ExportToImage />
+              <OverwriteConfirmDialog.Actions.SaveToDisk />
+            </OverwriteConfirmDialog>
+            <OverwriteConfirmDialog>
+              <OverwriteConfirmDialog.Actions.ExportToImage />
+              <OverwriteConfirmDialog.Actions.SaveToDisk />
+            </OverwriteConfirmDialog>
+            <AppFooter onChange={() => excalidrawAPI?.refresh()} />
+            {excalidrawAPI && <AIComponents excalidrawAPI={excalidrawAPI} />}
+
+            <TTDDialogTrigger />
+            {isCollaborating && isOffline && (
+              <div className="alertalert--warning">
+                {t("alerts.collabOfflineWarning")}
+              </div>
+            )}
+            {localStorageQuotaExceeded && (
+              <div className="alert alert--danger">
+                {t("alerts.localStorageQuotaExceeded")}
+              </div>
+            )}
+            {latestShareableLink && (
+              <ShareableLinkDialog
+                link={latestShareableLink}
+                onCloseRequest={() => setLatestShareableLink(null)}
+                setErrorMessage={setErrorMessage}
+              />
+            )}
+            {excalidrawAPI && !isCollabDisabled && (
+              <Collab excalidrawAPI={excalidrawAPI} />
+            )}
+
+            <ShareDialog
+              collabAPI={collabAPI}
+              onExportToBackend={async () => {
+                if (excalidrawAPI) {
+                  try {
+                    await onExportToBackend(
+                      excalidrawAPI.getSceneElements(),
+                      excalidrawAPI.getAppState(),
+                      excalidrawAPI.getFiles(),
+                    );
+                  } catch (error: any) {
+                    setErrorMessage(error.message);
                   }
                 }
-              },
-            },
-            {
-              label: t("labels.share"),
-              category: DEFAULT_CATEGORIES.app,
-              predicate: true,
-              icon: share,
-              keywords: [
-                "link",
-                "shareable",
-                "readonly",
-                "export",
-                "publish",
-                "snapshot",
-                "url",
-                "collaborate",
-                "invite",
-              ],
-              perform: async () => {
-                setShareDialogState({ isOpen: true, type: "share" });
-              },
-            },
-            {
-              ...CommandPalette.defaultItems.toggleTheme,
-              perform: () => {
-                setAppTheme(
-                  editorTheme === THEME.DARK ? THEME.LIGHT : THEME.DARK,
-                );
-              },
-            },
-            {
-              label: t("labels.installPWA"),
-              category: DEFAULT_CATEGORIES.app,
-              predicate: () => !!pwaEvent,
-              perform: () => {
-                if (pwaEvent) {
-                  pwaEvent.prompt();
-                  pwaEvent.userChoice.then(() => {
-                    // event cannot be reused, but we'll hopefully
-                    // grab new one as the event should be fired again
-                    pwaEvent = null;
-                  });
-                }
-              },
-            },
-          ]}
-        />
-        {isVisualDebuggerEnabled() && excalidrawAPI && (
-          <DebugCanvas
-            appState={excalidrawAPI.getAppState()}
-            scale={window.devicePixelRatio}
-            ref={debugCanvasRef}
-          />
-        )}
-      </Excalidraw>
-    </div>
+              }}
+            />
+
+            <AppSidebar />
+
+            {errorMessage && (
+              <ErrorDialog onClose={() => setErrorMessage("")}>
+                {errorMessage}
+              </ErrorDialog>
+            )}
+
+            <CommandPalette
+              customCommandPaletteItems={[
+                {
+                  label: t("labels.liveCollaboration"),
+                  category: DEFAULT_CATEGORIES.app,
+                  keywords: [
+                    "team",
+                    "multiplayer",
+                    "share",
+                    "public",
+                    "session",
+                    "invite",
+                  ],
+                  icon: usersIcon,
+                  perform: () => {
+                    setShareDialogState({
+                      isOpen: true,
+                      type: "collaborationOnly",
+                    });
+                  },
+                },
+                {
+                  label: t("roomDialog.button_stopSession"),
+                  category: DEFAULT_CATEGORIES.app,
+                  predicate: () => !!collabAPI?.isCollaborating(),
+                  keywords: [
+                    "stop",
+                    "session",
+                    "end",
+                    "leave",
+                    "close",
+                    "exit",
+                    "collaboration",
+                  ],
+                  perform: () => {
+                    if (collabAPI) {
+                      collabAPI.stopCollaboration();
+                      if (!collabAPI.isCollaborating()) {
+                        setShareDialogState({ isOpen: false });
+                      }
+                    }
+                  },
+                },
+                {
+                  label: t("labels.share"),
+                  category: DEFAULT_CATEGORIES.app,
+                  predicate: true,
+                  icon: share,
+                  keywords: [
+                    "link",
+                    "shareable",
+                    "readonly",
+                    "export",
+                    "publish",
+                    "snapshot",
+                    "url",
+                    "collaborate",
+                    "invite",
+                  ],
+                  perform: async () => {
+                    setShareDialogState({ isOpen: true, type: "share" });
+                  },
+                },
+                {
+                  ...CommandPalette.defaultItems.toggleTheme,
+                  perform: () => {
+                    setAppTheme(
+                      editorTheme === THEME.DARK ? THEME.LIGHT : THEME.DARK,
+                    );
+                  },
+                },
+                {
+                  label: t("labels.installPWA"),
+                  category: DEFAULT_CATEGORIES.app,
+                  predicate: () => !!pwaEvent,
+                  perform: () => {
+                    if (pwaEvent) {
+                      pwaEvent.prompt();
+                      pwaEvent.userChoice.then(() => {
+                        // event cannot be reused, but we'll hopefully
+                        // grab new one as the event should be fired again
+                        pwaEvent = null;
+                      });
+                    }
+                  },
+                },
+              ]}
+            />
+            {isVisualDebuggerEnabled() && excalidrawAPI && (
+              <DebugCanvas
+                appState={excalidrawAPI.getAppState()}
+                scale={window.devicePixelRatio}
+                ref={debugCanvasRef}
+              />
+            )}
+
+          </Excalidraw>
+        </SidebarLayout>
+      </div>
+    </PasswordGate>
   );
 };
 
@@ -1008,3 +1026,4 @@ const ExcalidrawApp = () => {
 };
 
 export default ExcalidrawApp;
+// Force rebuild

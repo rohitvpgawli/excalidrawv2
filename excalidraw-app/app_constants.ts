@@ -40,6 +40,7 @@ export const STORAGE_KEYS = {
   LOCAL_STORAGE_ELEMENTS: "glyph",
   LOCAL_STORAGE_APP_STATE: "glyph-state",
   LOCAL_STORAGE_COLLAB: "glyph-collab",
+  LOCAL_STORAGE_DRAWING_ID: "excalidraw-drawing-id",
   LOCAL_STORAGE_THEME: "glyph-theme",
   LOCAL_STORAGE_DEBUG: "glyph-debug",
   VERSION_DATA_STATE: "version-dataState",

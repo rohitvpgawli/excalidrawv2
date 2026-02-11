@@ -42,6 +42,9 @@ interface ImportMetaEnv {
 
   DEV: string;
   PROD: string;
+
+  VITE_UNSPLASH_ACCESS_KEY: string;
+  VITE_APP_PASSWORD: string;
 }
 
 interface ImportMeta {
